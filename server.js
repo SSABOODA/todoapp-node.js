@@ -63,7 +63,9 @@ app.post('/add', (요청, 응답) => {
 // 클라이언트가 '/list' url로 GET요청하면
 // HTML을 보여줌 (DB에 저장된 정보 응답)
 
-app.get('/list', (req, res) => {
-    res.render('list.ejs');
-
-});
+app.get('/list', (요청, 응답) => {
+    db.collection('post').find().toArray((에러, 결과) => {
+      console.log(결과);
+      응답.render('list.ejs', { posts : 결과 });
+    });
+  });
