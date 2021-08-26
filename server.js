@@ -11,8 +11,8 @@ app.set('view engine', 'ejs');
 
 
 var db;
-MongoClient.connect('mongodb+srv://ssaboo:bong2@cluster0.tz6ib.mongodb.net/myFirstDatabase?retryWrites=true&w=majority', (에러, client) => {
-    if(에러) return console.log(에러)
+MongoClient.connect('mongodb+srv://ssaboo:bong2@cluster0.tz6ib.mongodb.net/myFirstDatabase?retryWrites=true&w=majority', {useUnifiedTopology:true}, (err, client) => {
+    if(err) return console.log(err)
 
     db = client.db('todoapp');
 
@@ -31,41 +31,55 @@ MongoClient.connect('mongodb+srv://ssaboo:bong2@cluster0.tz6ib.mongodb.net/myFir
 //클라이언트가 /pet으로 url 입력하면
 //pet관련된 페이지를 응답해주자.
 
-app.get('/pet', (요청, 응답) => {
-    응답.send('펫용품 쇼핑 페이지입니다.');
+app.get('/pet', (req, res) => {
+    res.send('펫용품 쇼핑 페이지입니다.');
 });
 
-app.get('/beauty', (요청, 응답) => {
-    응답.send('뷰티용품 쇼핑 페이지입니다.');
+app.get('/beauty', (req, res) => {
+    res.send('뷰티용품 쇼핑 페이지입니다.');
 });
 
-app.get('/', (요청, 응답) => {
-    응답.sendFile(__dirname + '/index.html')
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/index.html')
 });
 
-app.get('/write', (요청, 응답) => {
-    응답.sendFile(__dirname + '/write.html')
+app.get('/write', (req, res) => {
+    res.sendFile(__dirname + '/write.html')
 });
 
 //클라이언트가 /add 경로로 POST 요청을 하면..
 //??를 해주세요~
 
-app.post('/add', (요청, 응답) => {
-    응답.send('전송완료');
-    console.log(요청.body.title);
-    console.log(요청.body.date);
+app.post('/add', (req, res) => {
+    res.send('전송완료');
     
-    db.collection('post').insertOne({제목 : 요청.body.title, 날짜 : 요청.body.date}, (요청, 에러) => {
+    db.collection('counter').findOne({name : '게시물갯수'}, (err, data) => {
+        console.log(data.totalpost)
+        var totalpost = data.totalpost
+        db.collection('post').insertOne({_id : totalpost + 1, 제목 : req.body.title, 날짜 : req.body.date}, () => {
+            console.log('저장완료')
+            db.collection('counter').updateOne({name : '게시물갯수'}, { $inc : {totalpost:1} }, (err, data) => {
+                if(err){return console.log('에러났음.')};
 
+            });
+        });
     });
 });
 
 // 클라이언트가 '/list' url로 GET요청하면
 // HTML을 보여줌 (DB에 저장된 정보 응답)
-
-app.get('/list', (요청, 응답) => {
-    db.collection('post').find().toArray((에러, 결과) => {
-      console.log(결과);
-      응답.render('list.ejs', { posts : 결과 });
+app.get('/list', (req, res) => {
+    db.collection('post').find().toArray((err, data) => {
+        res.render('list.ejs', { posts : data });
     });
   });
+
+app.delete('/delete', (req, res) => {
+    console.log(req.body)
+    req.body._id = parseInt(req.body._id) 
+    db.collection('post').deleteOne(req.body, (err, data) => {
+        console.log('삭제완료');
+        // res.status(200).send({ MESSAGE : '성공했습니다.' });
+        res.status(400).send({ MESSAGE : '실패했습니다.' });
+    });
+});
