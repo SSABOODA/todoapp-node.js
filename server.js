@@ -6,6 +6,8 @@ const app = express();
 const bodyParser= require('body-parser')
 app.use(bodyParser.urlencoded({extended: true})) 
 const MongoClient = require('mongodb').MongoClient;
+const methodOverride = require('method-override')
+app.use(methodOverride('_method'))
 app.set('view engine', 'ejs');
 
 app.use('/public', express.static('public'));
@@ -95,9 +97,15 @@ app.get('/detail/:id', (req, res) => {
     }); 
 });
 
-app.get('/edit:id', (req, res) => {
+app.get('/edit/:id', (req, res) => {
     db.collection('post').findOne({ _id : parseInt(req.params.id) }, (err, data) => {
-        console.log(data)
         res.render('edit.ejs', { post : data })
+    });
+});
+
+app.put('/edit', (req, res) => {
+    db.collection('post').updateOne({ _id : parseInt(req.body.id) }, {$set : { 제목: req.body.title, 날짜 : req.body.date }}, (err, data) => {
+        console.log('수정완료')
+        res.redirect('/list')
     });
 });
