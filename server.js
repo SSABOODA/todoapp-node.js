@@ -8,6 +8,8 @@ app.use(bodyParser.urlencoded({extended: true}))
 const MongoClient = require('mongodb').MongoClient;
 app.set('view engine', 'ejs');
 
+app.use('/public', express.static('public'));
+
 
 
 var db;
@@ -40,11 +42,13 @@ app.get('/beauty', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html')
+    // res.sendFile(__dirname + '/index.html')
+    res.render('index.ejs');
 });
 
 app.get('/write', (req, res) => {
-    res.sendFile(__dirname + '/write.html')
+    // res.sendFile(__dirname + '/write.html')
+    res.render('write.ejs');
 });
 
 //클라이언트가 /add 경로로 POST 요청을 하면..
@@ -81,5 +85,19 @@ app.delete('/delete', (req, res) => {
         console.log('삭제완료');
         // res.status(200).send({ MESSAGE : '성공했습니다.' });
         res.status(400).send({ MESSAGE : '실패했습니다.' });
+    });
+});
+
+app.get('/detail/:id', (req, res) => {
+    db.collection('post').findOne({_id : parseInt(req.params.id)}, (err, data) => {
+        console.log(data)
+        res.render('detail.ejs', { data : data });
+    }); 
+});
+
+app.get('/edit:id', (req, res) => {
+    db.collection('post').findOne({ _id : parseInt(req.params.id) }, (err, data) => {
+        console.log(data)
+        res.render('edit.ejs', { post : data })
     });
 });
