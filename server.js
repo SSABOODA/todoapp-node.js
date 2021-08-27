@@ -1,18 +1,25 @@
-// node.js server 실행 setting 
+// node.js server 실행 설정
 const express = require('express');
 const app = express();
 
 // HTML form data에서 서버로 전송한 data를 받을려면 'bodyparser'라이브러리가 필요
-const bodyParser= require('body-parser')
-app.use(bodyParser.urlencoded({extended: true})) 
+const bodyParser= require('body-parser');
+app.use(bodyParser.urlencoded({extended: true})); 
+
+// MongoDB 를 연결하기 위한 설정
 const MongoClient = require('mongodb').MongoClient;
-const methodOverride = require('method-override')
-app.use(methodOverride('_method'))
+const methodOverride = require('method-override');
+
+// HTML 상은 GET, POST 요청만 가능한데 PUT 요청을 가능하게 해주는 설정
+app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
 
 app.use('/public', express.static('public'));
 
-
+// Login 관련 import
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const session = require('express-session');
 
 var db;
 MongoClient.connect('mongodb+srv://ssaboo:bong2@cluster0.tz6ib.mongodb.net/myFirstDatabase?retryWrites=true&w=majority', {useUnifiedTopology:true}, (err, client) => {
@@ -30,7 +37,7 @@ MongoClient.connect('mongodb+srv://ssaboo:bong2@cluster0.tz6ib.mongodb.net/myFir
 });
 
 
-// () => Javascript ES6 문법 fuction(){} : ES6 이전 문법
+// () => {} Javascript ES6 문법 fuction(){} : ES6 이전 문법
 
 //클라이언트가 /pet으로 url 입력하면
 //pet관련된 페이지를 응답해주자.
@@ -108,4 +115,68 @@ app.put('/edit', (req, res) => {
         console.log('수정완료')
         res.redirect('/list')
     });
+});
+
+
+// Login 관련 Logic
+// app.use(middleware) 웹서버는 요청-응답해주는 머신
+app.use(session({secret : 'secret code', resave : true, saveUninitialized: false}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.get('/login', (req, res) => {
+    res.render('login.ejs')
+
+});
+
+app.post('/login', passport.authenticate('local', {
+    failureRedirect : '/fail'
+}), (req, res) => {
+    res.redirect('/')
+});
+
+app.get('/mypage', 로그인했니, (req, res) => {
+    console.log(req.user)
+    res.render('mypage.ejs', {User : req.user})
+});
+
+function 로그인했니(req, res, next) {
+    if (req.user) {
+        next()
+    } else {
+        res.send('로그인 안하셨는데요?')
+    }
+}
+
+
+
+
+// User information 검증 로직
+passport.use(new LocalStrategy({
+    usernameField : 'id',
+    passwordField : 'pw',
+    session : true,
+    passReqToCallback : false,
+}, (id, pw, done) => {
+    console.log(id, pw)
+    db.collection('login').findOne({ id : id }, (err, data) => {
+        if (err) return done (err)
+
+        if (!data) return done(null, false, { message : '아이디가 존재하지 않습니다.'})
+        if (pw == data.pw) {
+            return done(null, data)
+        } else {
+            return done(null, false, { message : '비밀번호가 틀렸습니다.'})
+        }
+    })
+}));
+
+passport.serializeUser( (user, done) => {
+    done(null, user.id)
+});
+passport.deserializeUser( (id, done) => {
+    db.collection('login').findOne({ id : id }, (err, data) => {
+        done(null, data)
+    });
+    
 });
