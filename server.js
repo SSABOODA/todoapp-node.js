@@ -1,3 +1,6 @@
+// 환경변수 등록을 위한 설정
+require('dotenv').config()
+
 // node.js server 실행 설정
 const express = require('express');
 const app = express();
@@ -22,7 +25,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const session = require('express-session');
 
 var db;
-MongoClient.connect('mongodb+srv://ssaboo:bong2@cluster0.tz6ib.mongodb.net/myFirstDatabase?retryWrites=true&w=majority', {useUnifiedTopology:true}, (err, client) => {
+MongoClient.connect(process.env.DB_URL, {useUnifiedTopology:true}, (err, client) => {
     if(err) return console.log(err)
 
     db = client.db('todoapp');
@@ -31,8 +34,8 @@ MongoClient.connect('mongodb+srv://ssaboo:bong2@cluster0.tz6ib.mongodb.net/myFir
     //     console.log('저장완료');
     // });
 
-    app.listen(8080, () => {
-        console.log('listening on 8080')    
+    app.listen(process.env.PORT, () => {
+        console.log('start server')    
     });
 });
 
@@ -83,9 +86,37 @@ app.post('/add', (req, res) => {
 // HTML을 보여줌 (DB에 저장된 정보 응답)
 app.get('/list', (req, res) => {
     db.collection('post').find().toArray((err, data) => {
-        res.render('list.ejs', { posts : data });
+        res.render('search.ejs', { posts : data });
     });
   });
+
+// app.get('/search', (req, res) => {
+//     // console.log(req.query.value);
+//     db.collection('post').find( { $text : { $search: req.query.value } }).toArray((err, data) => {
+//         res.render('search.ejs', { posts : data }); 
+//         console.log(data)
+//     });
+// });
+app.get('/search', (req, res) => {
+    var search_condition = [
+        {
+            $search : {
+                index : 'titleSearch',
+                text : {
+                    query : req.query.value,
+                    path : "제목" // 제목, 날짜 둘 다 찾고 싶으면 ['제목', '날짜']
+                }
+            }
+        },
+        // { $sort : { _id : -1 } }, // -1 : 내림차순 , 1 : 오름차순
+        // { $limit : 10 } // paging 연산자
+        { $project : { 제목 : 1, _id : 1, score: { $meta : "searchScore" } } }
+    ]
+    db.collection('post').aggregate( search_condition ).toArray( (err, data) => {
+        console.log(data)
+        res.render('search.ejs', { posts : data })
+    });
+});
 
 app.delete('/delete', (req, res) => {
     console.log(req.body)
@@ -147,8 +178,6 @@ function 로그인했니(req, res, next) {
         res.send('로그인 안하셨는데요?')
     }
 }
-
-
 
 
 // User information 검증 로직
