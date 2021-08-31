@@ -1,23 +1,32 @@
 // 환경변수 등록을 위한 설정
 require('dotenv').config()
 
+
 // node.js server 실행 설정
 const express = require('express');
 const app = express();
 
+
+// 채팅 서비스 socket.io
+// npm install socket.io
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
+
 // HTML form data에서 서버로 전송한 data를 받을려면 'bodyparser'라이브러리가 필요
-const bodyParser= require('body-parser');
+const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: true})); 
+
 
 // MongoDB 를 연결하기 위한 설정
 const MongoClient = require('mongodb').MongoClient;
 const methodOverride = require('method-override');
 
+
 // HTML 상은 GET, POST 요청만 가능한데 PUT 요청을 가능하게 해주는 설정
 app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
-
 app.use('/public', express.static('public'));
+
 
 // Login 관련 import
 const passport = require('passport');
@@ -34,10 +43,20 @@ MongoClient.connect(process.env.DB_URL, {useUnifiedTopology:true}, (err, client)
     //     console.log('저장완료');
     // });
 
-    app.listen(process.env.PORT, () => {
+    http.listen(process.env.PORT, () => {
         console.log('start server')    
     });
 });
+
+// web socket으로 서버와 통신하는 방법
+io.on('connection', (socket) => {
+    console.log('SUCCESS CONNECT');
+    
+    socket.on('인삿말', (data) => {
+        console.log(data);
+    });
+});
+
 
 
 // () => {} Javascript ES6 문법 fuction(){} : ES6 이전 문법
@@ -56,6 +75,10 @@ app.get('/beauty', (req, res) => {
 app.get('/', (req, res) => {
     // res.sendFile(__dirname + '/index.html')
     res.render('index.ejs');
+});
+
+app.get('/chat', (req, res) => {
+    res.render('chat.ejs')
 });
 
 app.get('/write', (req, res) => {
@@ -242,6 +265,7 @@ app.use('/board/sub', require('./routes/board.js'));
 // image upload logic
 // npm install multer
 let multer = require('multer');
+const { Server } = require('http');
 var storage = multer.diskStorage({
 
     destination : (req, file, cb) => {
