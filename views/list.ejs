@@ -38,7 +38,9 @@
           <h4>할일 제목 : <%= posts[i].제목 %></h4>
           <p>할일 마감날짜 : <%= posts[i].날짜 %></p>
           <button type="button" class="btn btn-dark delete" data-id="<%= posts[i]._id %>">삭제</button>
-          <button type="button" class="btn btn-dark" data-id="<%= posts[i]._id %>">수정</button>
+          <a href="/edit">
+            <button type="button" class="btn btn-dark update" data-id="<%= posts[i]._id %>">수정</button>
+          </a>
         </li>
         <% } %>
       </ul>
@@ -68,7 +70,6 @@
 
           });
         });
-
 
         $('#search').click(function(){
           var 입력한값 = $('#search-input').val();

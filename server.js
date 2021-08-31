@@ -63,24 +63,6 @@ app.get('/write', (req, res) => {
     res.render('write.ejs');
 });
 
-//클라이언트가 /add 경로로 POST 요청을 하면..
-//??를 해주세요~
-
-app.post('/add', (req, res) => {
-    res.send('전송완료');
-    
-    db.collection('counter').findOne({name : '게시물갯수'}, (err, data) => {
-        console.log(data.totalpost)
-        var totalpost = data.totalpost
-        db.collection('post').insertOne({_id : totalpost + 1, 제목 : req.body.title, 날짜 : req.body.date}, () => {
-            console.log('저장완료')
-            db.collection('counter').updateOne({name : '게시물갯수'}, { $inc : {totalpost:1} }, (err, data) => {
-                if(err){return console.log('에러났음.')};
-
-            });
-        });
-    });
-});
 
 // 클라이언트가 '/list' url로 GET요청하면
 // HTML을 보여줌 (DB에 저장된 정보 응답)
@@ -115,16 +97,6 @@ app.get('/search', (req, res) => {
     db.collection('post').aggregate( search_condition ).toArray( (err, data) => {
         console.log(data)
         res.render('search.ejs', { posts : data })
-    });
-});
-
-app.delete('/delete', (req, res) => {
-    console.log(req.body)
-    req.body._id = parseInt(req.body._id) 
-    db.collection('post').deleteOne(req.body, (err, data) => {
-        console.log('삭제완료');
-        // res.status(200).send({ MESSAGE : '성공했습니다.' });
-        res.status(400).send({ MESSAGE : '실패했습니다.' });
     });
 });
 
@@ -166,12 +138,12 @@ app.post('/login', passport.authenticate('local', {
     res.redirect('/')
 });
 
-app.get('/mypage', 로그인했니, (req, res) => {
+app.get('/mypage', userlogin, (req, res) => {
     console.log(req.user)
     res.render('mypage.ejs', {User : req.user})
 });
 
-function 로그인했니(req, res, next) {
+function userlogin(req, res, next) {
     if (req.user) {
         next()
     } else {
@@ -209,3 +181,59 @@ passport.deserializeUser( (id, done) => {
     });
     
 });
+
+app.post('/register', (req, res) => {
+    db.collection('login').insertOne({ id : req.body.id, pw : req.body.pw }, (err, data) => {
+        res.redirect('/')
+        // 회원가입 유효성 검사도 필요함.!!
+    });
+});
+
+//클라이언트가 /add 경로로 POST 요청을 하면..
+//??를 해주세요~
+app.post('/add', (req, res) => {
+    res.send('전송완료');
+    console.log(req.body)
+    
+    db.collection('counter').findOne({name : '게시물갯수'}, (err, data) => {
+        console.log(data.totalpost)
+        var totalpost = data.totalpost
+
+        var save_post = {
+            _id : totalpost + 1, 
+            작성자 : req.user._id,
+            제목 : req.body.title, 
+            날짜 : req.body.date, 
+        }
+
+        db.collection('post').insertOne(save_post, (err, data) => {
+            console.log('저장완료')
+            console.log(save_post)
+            db.collection('counter').updateOne({name : '게시물갯수'}, { $inc : {totalpost:1} }, (err, data) => {
+                if(err){return console.log('에러났음.')};
+
+            });
+        });
+    });
+});
+
+app.delete('/delete', (req, res) => {
+    console.log(req.body)
+    req.body._id = parseInt(req.body._id) 
+
+    var del_post = {
+        _id : req.body._id,
+        작성자 : req.user._id,
+    }
+
+    db.collection('post').deleteOne(del_post, (err, data) => {
+        console.log('삭제완료');
+        if (err) {console.log('ERROR')}
+        // res.status(200).send({ MESSAGE : '성공했습니다.' });
+        res.status(400).send({ MESSAGE : '실패했습니다.' });
+    });
+});
+
+
+app.use('/shop', require('./routes/shop.js'));
+app.use('/board/sub', require('./routes/board.js'));
