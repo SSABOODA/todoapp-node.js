@@ -14,7 +14,7 @@ const io = require('socket.io')(http);
 
 // HTML form data에서 서버로 전송한 data를 받을려면 'bodyparser'라이브러리가 필요
 const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({extended: true})); 
+app.use(bodyParser.urlencoded({extended : true})); 
 
 
 // MongoDB 를 연결하기 위한 설정
@@ -54,8 +54,23 @@ io.on('connection', (socket) => {
     
     socket.on('인삿말', (data) => {
         console.log(data);
+        io.emit('퍼트리기', data);
     });
 });
+
+// namespace
+var chat1 = io.of('/채팅방1')
+chat1.on('connection', (socket) => {
+    console.log('채팅방1에 연결되었습니다.');
+    
+    socket.on('인삿말', (data) => {
+        console.log(data);
+        chat1.emit('퍼트리기', data);
+    });
+});
+
+
+
 
 
 
@@ -295,3 +310,4 @@ app.post('/upload', upload.single('profile'), (req, res) => {
 app.get('/image/:imageName',  (req, res) => {
     res.sendFile( __dirname + '/public/image/' + req.params.imageName )
 });
+

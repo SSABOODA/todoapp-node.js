@@ -14,11 +14,26 @@
     <%- include('nav.html') %>
       
     <h4 class="m-5 text-center">실시간 채팅 서비스입니다.</h4>
+
+    <ul class="list-group" style="height: 300px; overflow-y : scroll;">
+      <li class="list-group-item">data</li>
+      <li class="list-group-item">data</li>
+      <li class="list-group-item">data</li>
+      <li class="list-group-item">data</li>
+      <li class="list-group-item">data</li>
+      <li class="list-group-item">data</li>
+      <li class="list-group-item">data</li>
+      <li class="list-group-item">data</li>
+      <li class="list-group-item">data</li>
+      <li class="list-group-item">data</li>
+    </ul>
     
     <div class="input-group mb-3 container">
         <input type="text" class="form-control" id="main-input">
         <button class="btn btn-outline-secondary" type="button" id="button-addon2">전송</button>
-      </div>
+    </div>
+
+    <button id='join1'>채팅방1 입장</button>
 
     <!-- Optional JavaScript; choose one of the two! -->
 
@@ -27,12 +42,20 @@
     <script src="https://cdn.socket.io/4.1.2/socket.io.min.js" integrity="sha384-toS6mmwu70G0fw54EGlWWeA4z3dyJ+dlXBtSURSKN4vyRFOcxd3Bzjj/AoOwY+Rg" crossorigin="anonymous"></script>
 
     <script>
-
-        const socket = io();
+      
+      $('#join1').click(function(){
+          var socket = io('/채팅방1');
         
-        $("#button-addon2").click(() => {
+          $("#button-addon2").click(() => {
             socket.emit( '인삿말', $('#main-input').val() );
-        });
+          });
+
+          socket.on('퍼트리기', function(data){
+            $('.list-group').append('<li class="list-group-item">'+ data +'</li>');
+            $('.list-group').scrollTop( $('.list-group').prop('scrollHeight') );
+          });
+      });
+
     </script>
     
 
