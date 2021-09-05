@@ -33,7 +33,12 @@
         <button class="btn btn-outline-secondary" type="button" id="button-addon2">전송</button>
     </div>
 
-    <button id='join1'>채팅방1 입장</button>
+    <div class="container">
+      <button class="btn btn-secondary mx-auto d-block w-100 mt-1">방1</button>
+      <button class="btn btn-secondary mx-auto d-block w-100 mt-1">방2</button>
+    </div>
+
+    <!-- <button id='join1'>채팅방1 입장</button> -->
 
     <!-- Optional JavaScript; choose one of the two! -->
 
@@ -43,17 +48,22 @@
 
     <script>
       
-      $('#join1').click(function(){
-          var socket = io('/채팅방1');
-        
-          $("#button-addon2").click(() => {
-            socket.emit( '인삿말', $('#main-input').val() );
-          });
+      var socket = io('/채팅방1');
 
-          socket.on('퍼트리기', function(data){
-            $('.list-group').append('<li class="list-group-item">'+ data +'</li>');
-            $('.list-group').scrollTop( $('.list-group').prop('scrollHeight') );
-          });
+      $('.mt-1').eq(0).click( function() {
+        socket.emit('방들어가고픔', 'room1');
+      });
+
+      $('.mt-1').eq(1).click( function() {
+        socket.emit('방들어가고픔', 'room2');
+      });
+
+      $('#button-addon2').click( function() {
+        socket.emit('인삿말', $('#main-input').val() );
+      });
+      socket.on('퍼트리기', function(data){
+        $('.list-group').append('<li class="list-group-item">'+ data +'</li>');
+        $('.list-group').scrollTop( $('.list-group').prop('scrollHeight') );
       });
 
     </script>

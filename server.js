@@ -1,5 +1,5 @@
 // 환경변수 등록을 위한 설정
-require('dotenv').config()
+require('dotenv').config();
 
 
 // node.js server 실행 설정
@@ -12,9 +12,10 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
+
 // HTML form data에서 서버로 전송한 data를 받을려면 'bodyparser'라이브러리가 필요
 const bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({extended : true})); 
+app.use(bodyParser.urlencoded({extended : true}));
 
 
 // MongoDB 를 연결하기 위한 설정
@@ -32,6 +33,7 @@ app.use('/public', express.static('public'));
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const session = require('express-session');
+
 
 var db;
 MongoClient.connect(process.env.DB_URL, {useUnifiedTopology:true}, (err, client) => {
@@ -59,20 +61,19 @@ io.on('connection', (socket) => {
 });
 
 // namespace
-var chat1 = io.of('/채팅방1')
-chat1.on('connection', (socket) => {
-    console.log('채팅방1에 연결되었습니다.');
-    
-    socket.on('인삿말', (data) => {
-        console.log(data);
-        chat1.emit('퍼트리기', data);
-    });
+var chat1 = io.of('/채팅방1');
+chat1.on('connection', function(socket){
+
+  var room_num = '';
+  socket.on('방들어가고픔', function(data){
+    socket.join(data);
+    room_num = data;
+  });
+  socket.on('인삿말', function(data){
+    console.log(data);
+    chat1.to(room_num).emit('퍼트리기', data);
+  });
 });
-
-
-
-
-
 
 // () => {} Javascript ES6 문법 fuction(){} : ES6 이전 문법
 
@@ -217,7 +218,6 @@ passport.deserializeUser( (id, done) => {
     db.collection('login').findOne({ id : id }, (err, data) => {
         done(null, data)
     });
-    
 });
 
 app.post('/register', (req, res) => {
@@ -257,7 +257,7 @@ app.post('/add', (req, res) => {
 
 app.delete('/delete', (req, res) => {
     console.log(req.body)
-    req.body._id = parseInt(req.body._id) 
+    req.body._id = parseInt(req.body._id)
 
     var del_post = {
         _id : req.body._id,
@@ -286,18 +286,20 @@ var storage = multer.diskStorage({
     destination : (req, file, cb) => {
         cb(null, './public/image');
     },
+
     filename : (req, file, cb) => {
         cb(null, file.originalname)
     },
-    filefiter : function(req, file, cb) {
-        
+
+    filefiter : (req, file, cb) => {
+
     },
     limit : function() {
 
     },
 });
 
-var upload = multer({storage : storage});
+var upload = multer( {storage : storage} );
 
 app.get('/upload', (req, res) => {
     res.render('upload.ejs')
@@ -310,4 +312,3 @@ app.post('/upload', upload.single('profile'), (req, res) => {
 app.get('/image/:imageName',  (req, res) => {
     res.sendFile( __dirname + '/public/image/' + req.params.imageName )
 });
-
